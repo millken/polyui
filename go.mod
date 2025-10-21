@@ -1,8 +1,6 @@
 module github.com/millken/polyui
 
-go 1.24.0
-
-toolchain go1.24.8
+go 1.24.8
 
 require (
 	github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71

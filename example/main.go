@@ -1,15 +1,39 @@
 package main
 
 import (
-	"github.com/millken/polyui/core"
+	"runtime"
+
+	polyapp "github.com/millken/polyui"
+	pcolor "github.com/millken/polyui/color"
+	"github.com/millken/polyui/component"
+	glimpl "github.com/millken/polyui/renderer/gl"
+	"github.com/millken/polyui/renderer/glfw"
 )
 
 func main() {
-	r := &core.NoOpRenderer{}
-	block := &core.Block{X: 10, Y: 20, W: 200, H: 100, Color: core.Color{R: 0.2, G: 0.6, B: 0.9, A: 1}}
-	ui := core.NewPolyUI(block, r)
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	w, err := glfw.NewGLFWWindow("PolyUI Go Example", 640, 480)
+	if err != nil {
+		panic(err)
+	}
+	w.MakeContextCurrent()
+	if err := w.InitGL(); err != nil {
+		panic(err)
+	}
+
+	glr := &glimpl.SimpleGLRenderer{}
+	if err := glr.Init(); err != nil {
+		panic(err)
+	}
+
+	blk := component.NewBlock(20, 20, 200, 100, pcolor.RGBA(100, 180, 240, 1.0))
+	ui := polyapp.NewPolyUI(blk, glr)
 	if err := ui.Init(); err != nil {
 		panic(err)
 	}
-	ui.RenderFrame(800, 600, 1)
+	if err := w.Open(ui); err != nil {
+		panic(err)
+	}
 }
