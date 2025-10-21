@@ -4,10 +4,10 @@
 package main
 
 import (
+	"bytes"
 	"image"
 	"image/color"
 	"image/png"
-	"os"
 	"runtime"
 
 	"github.com/millken/polyui/core"
@@ -31,12 +31,7 @@ func main() {
 		panic(err)
 	}
 
-	// create a temporary PNG to test image loading (no external asset required)
-	tmpFile, err := os.CreateTemp("", "polyui_go_img_*.png")
-	if err != nil {
-		panic(err)
-	}
-	defer tmpFile.Close()
+	// create a PNG in-memory to test image loading via Image.Data
 	img := image.NewRGBA(image.Rect(0, 0, 128, 128))
 	// fill with a simple gradient/color
 	for y := 0; y < 128; y++ {
@@ -44,16 +39,19 @@ func main() {
 			img.Set(x, y, color.RGBA{uint8(x * 2), uint8(y * 2), 128, 255})
 		}
 	}
-	if err := png.Encode(tmpFile, img); err != nil {
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
 		panic(err)
 	}
-
-	imageRes := core.Image{Path: tmpFile.Name()}
+	imageRes := core.Image{Data: buf.Bytes()}
 
 	block := &core.Block{X: 10, Y: 20, W: 200, H: 100, Color: core.Color{R: 0.2, G: 0.6, B: 0.9, A: 1}}
 
 	// small Image component instance
 	imgComp := &ImageComp{Img: imageRes, X: 240, Y: 20, W: 128, H: 128}
+
+	// Enable debug logging for this example
+	core.DebugEnabled = true
 
 	// Initialize and use the real OpenGL renderer implementation
 	glr := &glimpl.SimpleGLRenderer{}
@@ -61,14 +59,18 @@ func main() {
 	if err := glr.Init(); err != nil {
 		panic(err)
 	}
+	core.Debugln("gl renderer initialized")
 	ui := core.NewPolyUI(&core.Group{Children: []core.Component{block, imgComp}}, glr)
 	if err := ui.Init(); err != nil {
 		panic(err)
 	}
 
+	core.Debugln("opening window loop...")
 	if err := w.Open(ui); err != nil {
+		core.Debugf("w.Open returned error: %v\n", err)
 		panic(err)
 	}
+	core.Debugln("w.Open returned")
 }
 
 // small Image component implemented at package level

@@ -61,12 +61,29 @@ func (w *GLFWWindow) Open(ui *core.PolyUI) error {
 
 	w.win.MakeContextCurrent()
 
+	// Debug: print initial ShouldClose
+	core.Debugf("initial ShouldClose=%v\n", w.win.ShouldClose())
+	// Ensure window is not flagged closed before entering loop
+	w.win.SetShouldClose(false)
+	// install a close callback to debug external close requests
+	w.win.SetCloseCallback(func(_ *glfw.Window) {
+		core.Debugln("glfw close callback triggered")
+	})
+	core.Debugf("post-SetShouldClose=%v\n", w.win.ShouldClose())
+	core.Debugln("entering window loop")
 	// Simple loop: call ui.RenderFrame each frame
+	frame := 0
 	for !w.win.ShouldClose() {
+		if frame == 0 {
+			core.Debugln("first loop iteration")
+		}
 		width, height := w.win.GetSize()
 		ui.RenderFrame(float32(width), float32(height), 1.0)
 		glfw.PollEvents()
 		w.win.SwapBuffers()
+		frame++
+		// debug: print should-close state after polling events
+		core.Debugf("after frame %d ShouldClose=%v\n", frame, w.win.ShouldClose())
 		time.Sleep(time.Millisecond * 16) // ~60fps cap
 	}
 	return nil
@@ -88,19 +105,19 @@ func (w *GLFWWindow) GetClipboard() string  { return w.win.GetClipboardString() 
 // PlaceholderRenderer is a small renderer that prints draw calls; replace with NanoVG integration.
 type PlaceholderRenderer struct{}
 
-func (p *PlaceholderRenderer) Init() error { fmt.Println("PlaceholderRenderer: Init"); return nil }
+func (p *PlaceholderRenderer) Init() error { core.Debugln("PlaceholderRenderer: Init"); return nil }
 func (p *PlaceholderRenderer) BeginFrame(width, height, pixelRatio float32) {
-	fmt.Printf("BeginFrame %vx%v\n", width, height)
+	core.Debugf("BeginFrame %vx%v\n", width, height)
 }
-func (p *PlaceholderRenderer) EndFrame() { fmt.Println("EndFrame") }
+func (p *PlaceholderRenderer) EndFrame() { core.Debugln("EndFrame") }
 func (p *PlaceholderRenderer) Rect(x, y, w, h float32, color core.Color) {
-	fmt.Printf("Rect %v,%v %vx%v color=%+v\n", x, y, w, h, color)
+	core.Debugf("Rect %v,%v %vx%v color=%+v\n", x, y, w, h, color)
 }
 func (p *PlaceholderRenderer) Text(x, y float32, text string, size float32, color core.Color) {
-	fmt.Printf("Text '%s'\n", text)
+	core.Debugf("Text '%s'\n", text)
 }
 func (p *PlaceholderRenderer) Image(img core.Image, x, y, w, h float32) {
-	fmt.Printf("Image %s\n", img.Path)
+	core.Debugf("Image %s\n", img.Path)
 }
 func (p *PlaceholderRenderer) Push()                          {}
 func (p *PlaceholderRenderer) Pop()                           {}

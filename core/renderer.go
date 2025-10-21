@@ -8,6 +8,9 @@ type Color struct {
 // Image is an opaque handle to an image resource
 type Image struct {
 	Path string
+	// Data holds optional raw image bytes (PNG/JPEG). If non-empty, renderer should prefer this
+	// over loading from Path.
+	Data []byte
 }
 
 // Renderer defines the small rendering contract used by the prototype.
